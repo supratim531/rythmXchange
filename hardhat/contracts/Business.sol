@@ -7,7 +7,14 @@ import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 contract Business {
     uint256 public constant royaltyPercentage = 15; // 15% royalty
 
+    struct Song {
+        string name;
+        string artist;
+        string imageURL;
+    }
+
     struct Token {
+        Song song;
         uint256 price;
         uint256 tokenId;
         string tokenURI;
@@ -17,17 +24,17 @@ contract Business {
         uint256 sellEndTimestamp;
     }
 
-    Token[] public tokenList;
+    Token[] private tokenList;
     mapping(uint256 => Token) public tokens;
     mapping(uint256 => bool) public tokensExistence;
 
     constructor() {}
 
-    function getAllTokens() public view returns (Token[] memory) {
-        return tokenList;
-    }
-
     function saveAndTransferTokensToBusinessContract(
+        // params for song
+        string memory _name,
+        string memory _artist,
+        string memory _imageURL,
         // params for Item
         uint256 _price,
         string memory _tokenURI,
@@ -44,6 +51,7 @@ contract Business {
             ++i
         ) {
             tokens[i] = Token(
+                Song(_name, _artist, _imageURL),
                 _price,
                 i,
                 _tokenURI,
@@ -92,5 +100,48 @@ contract Business {
 
         // transfer the token to buyer
         _nft.transferFrom(owner, msg.sender, token.tokenId);
+    }
+
+    // fetch all tokens that have been minted by artists
+    function fetchAllTokens() public view returns (uint256, Token[] memory) {
+        return (tokenList.length, tokenList);
+    }
+
+    // fetch those tokens of which sell is started
+    function fetchAllTokensBySellStarted()
+        public
+        view
+        returns (uint256, Token[] memory)
+    {
+        uint256 _length = 0;
+        Token[] memory _tokens = new Token[](tokenList.length);
+
+        for (uint256 i = 0; i < tokenList.length; i++) {
+            if (tokenList[i].sellStartTimestamp < block.timestamp) {
+                _length++;
+                _tokens[i] = tokenList[i];
+            }
+        }
+
+        return (_length, _tokens);
+    }
+
+    // fetch those tokens of which sell is not started yet
+    function fetchAllTokensBySellNotStarted()
+        public
+        view
+        returns (uint256, Token[] memory)
+    {
+        uint256 _length = 0;
+        Token[] memory _tokens = new Token[](tokenList.length);
+
+        for (uint256 i = 0; i < tokenList.length; i++) {
+            if (tokenList[i].sellStartTimestamp > block.timestamp) {
+                _length++;
+                _tokens[i] = tokenList[i];
+            }
+        }
+
+        return (_length, _tokens);
     }
 }

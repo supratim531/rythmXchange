@@ -4,26 +4,27 @@ import { getAllSongs } from "../redux/services/businessServices";
 
 const SongList = () => {
   const dispatch = useDispatch();
-  const { songs } = useSelector((state) => state.business);
+  const { nfts } = useSelector((state) => state.business);
   const { businessContract } = useSelector((state) => state.auth);
 
   useEffect(() => {
-    businessContract && dispatch(getAllSongs(businessContract));
+    if (businessContract) {
+      dispatch(getAllSongs(businessContract));
+    }
   }, [businessContract]);
 
   return (
     <div className="m-4 flex flex-col justify-center items-center">
-      {!songs.length && <div>No songs are exist till now</div>}
-      {songs.length && (
+      {!nfts.length && <div>No songs are exist till now</div>}
+      {nfts.length ? (
         <div>
-          {songs.map((song, index) => (
-            <div
-              key={index}
-              className="flex m-4 justify-center items-center"
-            ></div>
+          {nfts.map((nft, index) => (
+            <div key={index} className="flex m-4 justify-center items-center">
+              {nft.tokenURI}
+            </div>
           ))}
         </div>
-      )}
+      ) : null}
     </div>
   );
 };

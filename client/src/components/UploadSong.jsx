@@ -1,8 +1,8 @@
 import React, { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import defaultAxios from "../axios";
-import { mintNFT } from "../redux/services/nftServices";
 import toast from "react-hot-toast";
+import { mintNFT } from "../redux/services/nftServices";
+import defaultAxios from "../axios";
 
 const UploadSong = () => {
   const dispatch = useDispatch();
@@ -62,10 +62,9 @@ const UploadSong = () => {
         },
       });
       console.log({ res });
+      const ipfsResponse = res.data;
       toast.success("Assets uploaded to IPFS successfully");
-
-      const tokenURI = res.data.tokenURI;
-      dispatch(mintNFT(data, tokenURI, nftContract, businessContract));
+      dispatch(mintNFT(data, ipfsResponse, nftContract, businessContract));
     } catch (err) {
       console.log({ err });
     }

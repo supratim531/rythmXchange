@@ -104,6 +104,9 @@ app.post("/upload", cors(), upload.array("file"), async (req, res) => {
     console.log({ tokenURIResponse });
 
     return res.status(201).json({
+      songURL: tokenURI.songURL,
+      imageURL: tokenURI.imageURL,
+      coverImageURL: tokenURI.coverImageURL,
       tokenURI: `https://${PINATA_DOMAIN}/ipfs/${tokenURIResponse.IpfsHash}`,
     });
   } catch (err) {
