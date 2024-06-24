@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import defaultAxios from "../axios";
-import { mintNFT } from "../redux/services/nft";
+import { mintNFT } from "../redux/services/nftServices";
 import toast from "react-hot-toast";
 
 const UploadSong = () => {
@@ -172,7 +172,7 @@ const UploadSong = () => {
         </div>
         <button
           type="submit"
-          className="self-start px-6 py-3 pb-4 rounded transition-all text-white bg-blue-600 hover:bg-blue-800"
+          className="self-start px-6 py-3 rounded transition-all text-white bg-blue-600 hover:bg-blue-800"
         >
           Upload
         </button>

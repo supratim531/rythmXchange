@@ -17,10 +17,15 @@ contract Business {
         uint256 sellEndTimestamp;
     }
 
+    Token[] public tokenList;
     mapping(uint256 => Token) public tokens;
     mapping(uint256 => bool) public tokensExistence;
 
     constructor() {}
+
+    function getAllTokens() public view returns (Token[] memory) {
+        return tokenList;
+    }
 
     function saveAndTransferTokensToBusinessContract(
         // params for Item
@@ -47,6 +52,7 @@ contract Business {
                 _sellStartTimestamp,
                 _sellEndTimestamp
             );
+            tokenList.push(tokens[i]);
             tokensExistence[i] = true;
 
             // transfers each token from creator to Business contract
