@@ -2,16 +2,18 @@ import React from "react";
 import { Outlet } from "react-router-dom";
 import { Toaster } from "react-hot-toast";
 import Header from "./components/Header";
+import Footer from "./components/Footer";
 
 function App() {
   return (
     <React.Fragment>
-      <div className="">
+      <div>
         <Toaster />
       </div>
-      <div className="App font-[Roboto]">
+      <div className="font-[Roboto]">
         <Header />
         <Outlet />
+        <Footer />
       </div>
     </React.Fragment>
   );

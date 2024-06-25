@@ -4,7 +4,7 @@ import {
   createRoutesFromElements,
 } from "react-router-dom";
 import App from "../App";
-import Home from "../components/Home";
+import Home from "../pages/Home";
 import SongList from "../components/SongList";
 import UploadSong from "../components/UploadSong";
 
