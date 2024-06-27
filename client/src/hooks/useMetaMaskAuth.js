@@ -59,7 +59,9 @@ const useMetaMaskAuth = () => {
         })
       );
       localStorage.setItem("wallet", wallet);
-      toast.success("wallet connected successfully");
+      toast.success("wallet connected successfully", {
+        position: "top-left",
+      });
     } catch (err) {
       console.log(err);
       dispatch(updateStatus("rejected"));
@@ -67,10 +69,17 @@ const useMetaMaskAuth = () => {
 
       if (err?.code === -32002) {
         if (err?.message) {
-          toast.error(`${err?.message} (Wallet might be locked)`);
+          toast.error(`${err?.message} (Wallet might be locked)`, {
+            position: "top-left",
+          });
         }
       } else {
-        toast.error("user denied authorization");
+        toast.error(
+          "MetaMask is not installed OR User denied the authorization",
+          {
+            position: "top-left",
+          }
+        );
       }
     }
   };
@@ -105,7 +114,7 @@ const useMetaMaskAuth = () => {
     } else {
       alert("please install MetaMask first to use this application");
     }
-  }, []);
+  }, [ethereum]);
 
   return { connectWallet, disconnectWallet };
 };

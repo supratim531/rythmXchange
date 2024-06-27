@@ -75,7 +75,7 @@ app.post("/upload", cors(), upload.array("file"), async (req, res) => {
 
     // It is the tokenURI which will be attached with the NFT
     const tokenURI = {
-      song: req.body.song,
+      title: req.body.title,
       artist: req.body.artist,
       imageURL: `https://${PINATA_DOMAIN}/ipfs/${imageFileResponse.IpfsHash}`,
       coverImageURL: `https://${PINATA_DOMAIN}/ipfs/${coverImageFileResponse.IpfsHash}`,
@@ -87,7 +87,7 @@ app.post("/upload", cors(), upload.array("file"), async (req, res) => {
       ],
       description: req.body.description,
       image: `https://${PINATA_DOMAIN}/ipfs/${imageFileResponse.IpfsHash}`,
-      name: req.body.song,
+      name: req.body.title,
     };
 
     const tokenURIPinOptions = {

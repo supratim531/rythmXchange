@@ -2,7 +2,6 @@ import React from "react";
 import { Outlet } from "react-router-dom";
 import { Toaster } from "react-hot-toast";
 import Header from "./components/Header";
-import Footer from "./components/Footer";
 
 function App() {
   return (
@@ -13,7 +12,6 @@ function App() {
       <div className="font-[Roboto]">
         <Header />
         <Outlet />
-        <Footer />
       </div>
     </React.Fragment>
   );

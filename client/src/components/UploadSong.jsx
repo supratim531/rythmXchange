@@ -6,17 +6,18 @@ import defaultAxios from "../axios";
 
 const UploadSong = () => {
   const dispatch = useDispatch();
-  const { nftContract, businessContract } = useSelector((state) => state.auth);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const { isWalletConnected, nftContract, businessContract } = useSelector(
+    (state) => state.auth
+  );
 
   const [data, setData] = useState({
-    song: "",
+    title: "",
     artist: "",
-    color: "",
+    color: "black",
     numberOfEditions: "",
     price: "",
     description: "",
-    sellStartTimestamp: "",
-    sellEndTimestamp: "",
   });
 
   const [file, setFile] = useState({
@@ -41,10 +42,11 @@ const UploadSong = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setIsProcessing(true);
 
     try {
       const formData = new FormData();
-      formData.append("song", data.song);
+      formData.append("title", data.title);
       formData.append("artist", data.artist);
       formData.append("color", data.color);
       formData.append("description", data.description);
@@ -63,119 +65,121 @@ const UploadSong = () => {
       });
       console.log({ res });
       const ipfsResponse = res.data;
-      toast.success("Assets uploaded to IPFS successfully");
-      dispatch(mintNFT(data, ipfsResponse, nftContract, businessContract));
+      // setIsProcessing(false);
+      toast.success("Assets uploaded to IPFS successfully", {
+        position: "top-left",
+      });
+      dispatch(
+        mintNFT(
+          data,
+          ipfsResponse,
+          nftContract,
+          businessContract,
+          setIsProcessing
+        )
+      );
     } catch (err) {
       console.log({ err });
+      setIsProcessing(false);
+      toast.error("Something went wrong while storing assets on IPFS", {
+        position: "top-left",
+      });
     }
   };
 
   return (
-    <div className="container mx-auto py-10">
-      <form onSubmit={handleSubmit} className="flex flex-col gap-10">
-        <input
-          type="text"
-          name="song"
-          className="form-input"
-          placeholder="Name of the Song"
-          value={data.song}
-          onChange={handleDataChange}
-        />
-        <input
-          type="text"
-          name="artist"
-          className="form-input"
-          placeholder="Name of the Artist"
-          value={data.artist}
-          onChange={handleDataChange}
-        />
-        <input
+    <div className="container mx-auto p-4">
+      {isWalletConnected ? (
+        <form onSubmit={handleSubmit} className="flex flex-col gap-10">
+          <div className="-mb-6 text-2xl font-bold text-gray-800">Metadata</div>
+          <input
+            type="text"
+            name="title"
+            className="form-input"
+            placeholder="Title for the Song"
+            value={data.title}
+            onChange={handleDataChange}
+          />
+          <input
+            type="text"
+            name="artist"
+            className="form-input"
+            placeholder="Name of the Artist"
+            value={data.artist}
+            onChange={handleDataChange}
+          />
+          {/* <input
           type="color"
           name="color"
           className="form-input"
           value={data.color}
           onChange={handleDataChange}
-        />
-        <input
-          type="text"
-          name="numberOfEditions"
-          className="form-input"
-          placeholder="Number of Editions"
-          value={data.numberOfEditions}
-          onChange={handleDataChange}
-        />
-        <input
-          type="text"
-          name="price"
-          className="form-input"
-          placeholder="Price of each Edition"
-          value={data.price}
-          onChange={handleDataChange}
-        />
-        <textarea
-          rows={5}
-          cols={3}
-          name="description"
-          className="form-input"
-          placeholder="Description for the Song"
-          value={data.description}
-          onChange={handleDataChange}
-        ></textarea>
-        <div>
-          <label htmlFor="time">Select Sell Start Time: </label>
+        /> */}
           <input
-            type="datetime-local"
-            name="time"
+            type="text"
+            name="numberOfEditions"
             className="form-input"
-            onChange={(e) => {
-              // Convert the input datetime to a Unix timestamp
-              const date = new Date(e.target.value);
-              setData((prev) => ({
-                ...prev,
-                sellStartTimestamp: Math.floor(date.getTime() / 1000),
-              }));
-            }}
+            placeholder="Number of Editions (eg. 2 or 3)"
+            value={data.numberOfEditions}
+            onChange={handleDataChange}
           />
-        </div>
-        <div>
-          <label htmlFor="time">Select Sell End Time: </label>
           <input
-            type="datetime-local"
-            name="time"
+            type="text"
+            name="price"
             className="form-input"
-            onChange={(e) => {
-              // Convert the input datetime to a Unix timestamp
-              const date = new Date(e.target.value);
-              setData((prev) => ({
-                ...prev,
-                sellEndTimestamp: Math.floor(date.getTime() / 1000),
-              }));
-            }}
+            placeholder="Price of each Edition (in wei format)"
+            value={data.price}
+            onChange={handleDataChange}
           />
+          <textarea
+            rows={5}
+            cols={3}
+            name="description"
+            className="form-input"
+            placeholder="Description for the Song"
+            value={data.description}
+            onChange={handleDataChange}
+          ></textarea>
+
+          <div className="-mb-6 text-2xl font-bold text-gray-800">Assets</div>
+          <div>
+            <label>Choose an Image: </label>
+            <input type="file" name="imageFile" onChange={handleFileChange} />
+          </div>
+          <div>
+            <label>Choose a Cover Image: </label>
+            <input
+              type="file"
+              name="coverImageFile"
+              onChange={handleFileChange}
+            />
+          </div>
+          <div className="">
+            <label>Choose the Song: </label>
+            <input type="file" name="songFile" onChange={handleFileChange} />
+          </div>
+          {isProcessing ? (
+            <button
+              type="button"
+              disabled
+              className="cursor-not-allowed italic self-start px-6 py-3 rounded opacity-80 text-white bg-blue-600"
+            >
+              Uploading...
+            </button>
+          ) : (
+            <button
+              type="submit"
+              className="self-start px-6 py-3 rounded transition-all text-white bg-blue-600 hover:bg-blue-800"
+            >
+              Upload
+            </button>
+          )}
+        </form>
+      ) : (
+        <div className="text-center font-medium opacity-60 text-gray-600">
+          Connect your MetaMask wallet first to use this application
         </div>
-        <div>
-          <label>Choose an Image: </label>
-          <input type="file" name="imageFile" onChange={handleFileChange} />
-        </div>
-        <div>
-          <label>Choose a Cover Image: </label>
-          <input
-            type="file"
-            name="coverImageFile"
-            onChange={handleFileChange}
-          />
-        </div>
-        <div className="">
-          <label>Choose the Song: </label>
-          <input type="file" name="songFile" onChange={handleFileChange} />
-        </div>
-        <button
-          type="submit"
-          className="self-start px-6 py-3 rounded transition-all text-white bg-blue-600 hover:bg-blue-800"
-        >
-          Upload
-        </button>
-      </form>
+      )}
     </div>
   );
 };

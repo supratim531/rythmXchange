@@ -1,16 +1,16 @@
-import { parseNFTs } from "../../utils/nftUtils";
+import { parseResult } from "../../utils/nftUtils";
 import { fetchAllSongs } from "../actions/businessActions";
 
-export const getAllSongs = (businessContract) => async (dispatch, getState) => {
-  try {
-    const res = await businessContract.fetchAllTokens();
-    console.log({ res });
-    const rawNFTs = res[1];
-    const totalNFTs = Number(res[0]);
-    const nfts = parseNFTs(rawNFTs);
-    console.log(totalNFTs, nfts);
-    dispatch(fetchAllSongs(nfts));
-  } catch (err) {
-    console.log({ err });
-  }
-};
+export const getAllSongs =
+  (businessContract, allowDuplicate = true) =>
+  async (dispatch, getState) => {
+    try {
+      const res = await businessContract.findAllTokens();
+      console.log({ res });
+      const tokens = parseResult(res, allowDuplicate);
+      console.log({ tokens });
+      dispatch(fetchAllSongs(tokens));
+    } catch (err) {
+      console.log({ err });
+    }
+  };

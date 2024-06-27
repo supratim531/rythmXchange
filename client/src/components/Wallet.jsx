@@ -30,7 +30,7 @@ const Wallet = ({ wallet, className = "", ...props }) => {
     <span
       onClick={handleCopyText}
       title="Copy Wallet"
-      className={`cursor-pointer font-poppins font-medium text-[12px] text-gray-300 ${className}`}
+      className={`cursor-pointer font-poppins font-medium text-[12px] text-blue-400 ${className}`}
       {...props}
     >
       {abbriviatedWallet}

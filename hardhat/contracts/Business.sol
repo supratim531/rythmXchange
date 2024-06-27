@@ -5,41 +5,126 @@ pragma solidity ^0.8.20;
 import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 
 contract Business {
-    uint256 public constant royaltyPercentage = 15; // 15% royalty
+    uint256 public tokenCount;
+    uint256 public totalEarningsFromArtists;
+
+    // business owner is the deployer of this Business contract
+    address payable public immutable businessOwner;
+
+    constructor() {
+        businessOwner = payable(msg.sender);
+    }
 
     struct Song {
-        string name;
+        string title;
         string artist;
         string imageURL;
+        string description;
+    }
+
+    struct PurchaseHistory {
+        address to;
+        address from;
+        uint256 date;
+        uint256 price;
     }
 
     struct Token {
         Song song;
+        bool isOnSale;
         uint256 price;
         uint256 tokenId;
         string tokenURI;
         uint256 dateOfMint;
+        address currentOwner;
         address payable creator;
-        uint256 sellStartTimestamp;
-        uint256 sellEndTimestamp;
     }
 
-    Token[] private tokenList;
+    // tokenId => Fetches the token
     mapping(uint256 => Token) public tokens;
-    mapping(uint256 => bool) public tokensExistence;
+    // tokenId => Checks existence of the token
+    mapping(uint256 => bool) public tokensExist;
+    // tokenId => Fetches purchase history of the token
+    mapping(uint256 => PurchaseHistory[]) public tokensPurchaseHistory;
 
-    constructor() {}
+    receive() external payable {}
+
+    function findPurchaseHistoryOfToken(
+        uint256 _tokenId
+    ) public view returns (PurchaseHistory[] memory) {
+        require(tokensExist[_tokenId], "Token does not exist");
+
+        PurchaseHistory[] memory purchaseHistory = tokensPurchaseHistory[
+            _tokenId
+        ];
+        return purchaseHistory;
+    }
+
+    function withdrawBalance() external {
+        require(msg.sender == businessOwner, "You are not the owner/deployer");
+
+        (bool paymentStatus, ) = businessOwner.call{
+            value: address(this).balance
+        }("");
+        require(paymentStatus, "Withdraw failed");
+    }
+
+    function findCountOfTokensOnSale() public view returns (uint256) {
+        uint256 count = 0;
+
+        for (uint256 i = 1; i <= tokenCount; ++i) {
+            if (tokens[i].isOnSale) {
+                count++;
+            }
+        }
+
+        return count;
+    }
+
+    function findAllTokens() public view returns (Token[] memory) {
+        Token[] memory _tokens = new Token[](tokenCount + 1);
+
+        for (uint256 i = 1; i <= tokenCount; ++i) {
+            _tokens[i] = tokens[i];
+        }
+
+        return _tokens;
+    }
+
+    function listTokenForSale(
+        IERC721 _nft,
+        uint256 _price,
+        uint256 _tokenId
+    ) public {
+        require(tokensExist[_tokenId], "Token does not exist");
+        require(
+            msg.sender == _nft.ownerOf(_tokenId),
+            "You are not the owner of this token"
+        );
+
+        Token storage token = tokens[_tokenId];
+        require(
+            !token.isOnSale,
+            "Token is already on sale, cannot list for sale"
+        );
+        require(
+            _price >= token.price,
+            "New price must be equal or higher than the old price"
+        );
+
+        token.price = _price;
+        token.isOnSale = true;
+    }
 
     function saveAndTransferTokensToBusinessContract(
-        // params for song
-        string memory _name,
+        // params for Song
+        string memory _title,
         string memory _artist,
         string memory _imageURL,
-        // params for Item
+        string memory _description,
+        // params for other Token metadata
         uint256 _price,
         string memory _tokenURI,
-        uint256 _sellStartTimestamp,
-        uint256 _sellEndTimestamp,
         // extra params
         IERC721 _nft,
         uint256 _initialEdition,
@@ -50,18 +135,18 @@ contract Business {
             i < _initialEdition + _numberOfEditions;
             ++i
         ) {
+            tokenCount++;
+            tokensExist[i] = true;
             tokens[i] = Token(
-                Song(_name, _artist, _imageURL),
+                Song(_title, _artist, _imageURL, _description),
+                true,
                 _price,
                 i,
                 _tokenURI,
                 block.timestamp,
-                payable(msg.sender),
-                _sellStartTimestamp,
-                _sellEndTimestamp
+                msg.sender,
+                payable(msg.sender)
             );
-            tokenList.push(tokens[i]);
-            tokensExistence[i] = true;
 
             // transfers each token from creator to Business contract
             _nft.transferFrom(msg.sender, address(this), i);
@@ -69,79 +154,72 @@ contract Business {
     }
 
     function purchaseToken(IERC721 _nft, uint256 _tokenId) external payable {
-        require(tokensExistence[_tokenId], "Token doesn't exist");
+        require(tokensExist[_tokenId], "Token does not exist");
 
-        Token memory token = tokens[_tokenId];
+        Token storage token = tokens[_tokenId];
+        require(
+            msg.sender != token.currentOwner,
+            "You already purchased the token"
+        );
+        require(token.isOnSale, "Token is not on sale, you cannot purchase");
         require(
             msg.value == token.price,
-            "Total ether must be equal to price of the token"
+            "Ether must be equal to the defined price for the token"
         );
 
         address owner = _nft.ownerOf(token.tokenId);
 
-        // transfer the price to creator/owner & creator
         if (owner == address(this)) {
-            (bool paymentStatus, ) = token.creator.call{value: msg.value}("");
-            require(paymentStatus, "Transaction failed");
+            tokensPurchaseHistory[_tokenId].push(
+                PurchaseHistory(
+                    msg.sender,
+                    token.creator,
+                    block.timestamp,
+                    token.price
+                )
+            );
         } else {
-            uint256 royaltyAmount = (msg.value * royaltyPercentage) / 100;
-            uint256 remainingAmount = msg.value - royaltyAmount;
-
-            (bool paymentStatusOfCreator, ) = token.creator.call{
-                value: royaltyAmount
-            }("");
-            require(paymentStatusOfCreator, "Transaction to creator failed");
-
-            (bool paymentStatusOfOwner, ) = payable(owner).call{
-                value: remainingAmount
-            }("");
-            require(paymentStatusOfOwner, "Transaction to owner failed");
+            tokensPurchaseHistory[_tokenId].push(
+                PurchaseHistory(msg.sender, owner, block.timestamp, token.price)
+            );
         }
 
-        // transfer the token to buyer
+        // transfer the price to the creator or/and owner of the token along with the platform
+        if (owner == address(this)) {
+            // primary sell
+            uint256 platformFee = (msg.value * 10) / 100;
+            uint256 remainingPrice = msg.value - platformFee;
+
+            (bool paymentStatus, ) = payable(owner).call{value: platformFee}(
+                ""
+            );
+            require(paymentStatus, "Fee transaction failed to the platform");
+
+            totalEarningsFromArtists += remainingPrice;
+            (paymentStatus, ) = token.creator.call{value: remainingPrice}("");
+            require(paymentStatus, "Price transaction failed to the creator");
+        } else {
+            // secondary sell
+            uint256 royalty = (msg.value * 10) / 100;
+            uint256 platformFee = (msg.value * 3) / 100;
+            uint256 remainingPrice = msg.value - (royalty + platformFee);
+
+            (bool paymentStatus, ) = payable(address(this)).call{
+                value: platformFee
+            }("");
+            require(paymentStatus, "Fee transaction failed to the platform");
+
+            totalEarningsFromArtists += royalty;
+            (paymentStatus, ) = token.creator.call{value: royalty}("");
+            require(paymentStatus, "Royalty transaction failed to the creator");
+
+            (paymentStatus, ) = payable(owner).call{value: remainingPrice}("");
+            require(paymentStatus, "Price transaction failed to the owner");
+        }
+
+        token.isOnSale = false;
+        token.currentOwner = msg.sender;
+        // transfer the token to the buyer/new owner
         _nft.transferFrom(owner, msg.sender, token.tokenId);
-    }
-
-    // fetch all tokens that have been minted by artists
-    function fetchAllTokens() public view returns (uint256, Token[] memory) {
-        return (tokenList.length, tokenList);
-    }
-
-    // fetch those tokens of which sell is started
-    function fetchAllTokensBySellStarted()
-        public
-        view
-        returns (uint256, Token[] memory)
-    {
-        uint256 _length = 0;
-        Token[] memory _tokens = new Token[](tokenList.length);
-
-        for (uint256 i = 0; i < tokenList.length; i++) {
-            if (tokenList[i].sellStartTimestamp < block.timestamp) {
-                _length++;
-                _tokens[i] = tokenList[i];
-            }
-        }
-
-        return (_length, _tokens);
-    }
-
-    // fetch those tokens of which sell is not started yet
-    function fetchAllTokensBySellNotStarted()
-        public
-        view
-        returns (uint256, Token[] memory)
-    {
-        uint256 _length = 0;
-        Token[] memory _tokens = new Token[](tokenList.length);
-
-        for (uint256 i = 0; i < tokenList.length; i++) {
-            if (tokenList[i].sellStartTimestamp > block.timestamp) {
-                _length++;
-                _tokens[i] = tokenList[i];
-            }
-        }
-
-        return (_length, _tokens);
     }
 }

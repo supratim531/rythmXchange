@@ -1,7 +1,7 @@
 import toast from "react-hot-toast";
 
 export const mintNFT =
-  (data, ipfsResponse, nftContract, businessContract) =>
+  (data, ipfsResponse, nftContract, businessContract, setIsProcessing) =>
   async (dispatch, getState) => {
     try {
       let res = await nftContract.mintNFT(
@@ -16,19 +16,18 @@ export const mintNFT =
       const currentTokenId = res;
       console.log({ currentTokenId });
 
-      // set Approval for all NFTs to the Business Contract in order to manage NFTs on behalf of the creator
+      // set Approval for all NFTs to the Business Contract in order to manage NFTs on behalf of the creator/owner
       await (
         await nftContract.setApprovalForAll(businessContract.target, true)
       ).wait();
 
       res = await businessContract.saveAndTransferTokensToBusinessContract(
-        data.song,
+        data.title,
         data.artist,
         ipfsResponse.imageURL,
+        data.description,
         data.price,
         ipfsResponse.tokenURI,
-        data.sellStartTimestamp,
-        data.sellEndTimestamp,
         nftContract.target,
         Number(currentTokenId) - Number(data.numberOfEditions),
         data.numberOfEditions
@@ -36,8 +35,15 @@ export const mintNFT =
       console.log({ res });
       receipt = await res.wait();
       console.log({ receipt });
-      toast.success("NFT minted successfully");
+      setIsProcessing(false);
+      toast.success("NFT minted successfully", {
+        position: "top-left",
+      });
     } catch (err) {
       console.log({ err });
+      setIsProcessing(false);
+      toast.error(err?.reason, {
+        position: "top-left",
+      });
     }
   };
