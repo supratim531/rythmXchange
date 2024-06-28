@@ -10,9 +10,9 @@ The official NFT based decentralized music application (our final college projec
 ## Smart Contracts
 
 - ### [MusicNFT](https://sepolia.etherscan.io/address/0x0688432dFd9E71BE9AA76574e43211430aEF5e86#code)<br>
-![Our MusicNFT Contract](MusicNFT)<br><br>
+![Our MusicNFT Contract](https://github.com/supratim531/rythmXchange/assets/91423964/9c5019bd-6135-4024-b82a-86fe0dc8b471)<br><br>
 - ### [Business](https://sepolia.etherscan.io/address/0x3e3C80B52289584b530Ac726ffbEEAc69aBD8499#code)<br>
-![Our Business Contract](URL_or_path_to_image)
+![Our Business Contract](https://github.com/supratim531/rythmXchange/assets/91423964/1dd072e5-adc7-4170-9fea-b4a3d9a58cd2)
 
 ## Introduction Video
 
