@@ -16,4 +16,4 @@ The official NFT based decentralized music application (our final college projec
 
 ## Introduction Video
 
-[![Watch the video](https://img.youtube.com/vi/YOUR_VIDEO_ID/0.jpg)](https://www.youtube.com/watch?v=YOUR_VIDEO_ID)
+[![Watch the video](https://github.com/supratim531/rythmXchange/assets/91423964/69f0861d-de38-4634-bcf8-856e59a80ad5)](https://github.com/supratim531/rythmXchange/assets/91423964/82112ada-65a8-4783-8f89-dc3bb2e18166)
